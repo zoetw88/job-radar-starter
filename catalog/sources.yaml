@@ -1,0 +1,72 @@
+countries:
+  TW:
+    name: Taiwan
+    sources: [greenhouse, lever, ashby]
+  JP:
+    name: Japan
+    sources: [greenhouse, lever, ashby]
+  SG:
+    name: Singapore
+    sources: [greenhouse, lever, ashby]
+  CA:
+    name: Canada
+    sources: [greenhouse, lever, ashby]
+  GB:
+    name: United Kingdom
+    sources: [greenhouse, lever, ashby]
+  DE:
+    name: Germany
+    sources: [greenhouse, lever, ashby]
+  FR:
+    name: France
+    sources: [greenhouse, lever, ashby]
+  NL:
+    name: Netherlands
+    sources: [greenhouse, lever, ashby]
+  REMOTE:
+    name: Global Remote
+    sources: [greenhouse, lever, ashby]
+
+sources:
+  greenhouse:
+    kind: official_api
+    terms_url: https://developer.greenhouse.io/job-board.html
+    enabled: true
+  lever:
+    kind: official_api
+    terms_url: https://github.com/lever/postings-api
+    enabled: true
+  ashby:
+    kind: official_api
+    terms_url: https://developers.ashbyhq.com/docs/public-job-posting-api
+    enabled: true
+
+companies:
+  PayPay:
+    countries: [JP]
+    source: greenhouse
+    board: paypay
+  GitLab:
+    countries: [REMOTE]
+    source: greenhouse
+    board: gitlab
+  Faire:
+    countries: [CA]
+    source: greenhouse
+    board: faire
+  Monzo:
+    countries: [GB]
+    source: greenhouse
+    board: monzo
+  OpenAI:
+    countries: [GB]
+    source: ashby
+    board: openai
+  Airwallex:
+    countries: [SG, TW]
+    source: ashby
+    board: airwallex
+  Cohere:
+    countries: [CA, GB, FR, REMOTE]
+    source: ashby
+    board: cohere

@@ -1,0 +1,35 @@
+profile:
+  # Keep the real file under gitignored user-data/.
+  resume_path: user-data/resume.md
+  skills:
+    - Go
+    - Python
+    - PostgreSQL
+
+preferences:
+  countries:
+    - CA
+    - REMOTE
+  roles:
+    - backend
+    - platform
+  tracks:
+    - ai-product
+    - backend
+  visa_required: true
+
+companies:
+  preferred:
+    - Your preferred company
+  excluded:
+    - A company you do not want to see
+
+matching:
+  # The scanner or AI controller may use these local-only rules when it
+  # produces normalized jobs JSON. The dashboard displays the resulting score.
+  minimum_score: 65
+  must_have:
+    - backend
+  exclude_keywords:
+    - unpaid
+    - commission-only
