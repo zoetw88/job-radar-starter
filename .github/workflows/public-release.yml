@@ -1,0 +1,57 @@
+name: public release gate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            optional-sync/cloudflare/package-lock.json
+      - name: Install Python and Node dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check --require-hashes -r requirements-ci.lock
+          python -m pip install --no-build-isolation --no-deps -e .
+          job-radar --help
+          npm ci
+          npm ci --prefix optional-sync/cloudflare
+          npx playwright install chromium
+      - name: Install pinned Gitleaks CLI
+        shell: pwsh
+        run: |
+          $version = "8.30.1"
+          $expectedHash = "d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e"
+          $archive = Join-Path $env:RUNNER_TEMP "gitleaks.zip"
+          $install = Join-Path $env:USERPROFILE ".local\share\gitleaks\$version"
+          Invoke-WebRequest `
+            -Uri "https://github.com/gitleaks/gitleaks/releases/download/v$version/gitleaks_${version}_windows_x64.zip" `
+            -OutFile $archive
+          $actualHash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          if ($actualHash -ne $expectedHash) {
+            throw "Gitleaks archive hash mismatch"
+          }
+          New-Item -ItemType Directory -Force -Path $install | Out-Null
+          Expand-Archive -LiteralPath $archive -DestinationPath $install -Force
+          & (Join-Path $install "gitleaks.exe") version
+      - name: Run complete public release contract
+        shell: pwsh
+        run: ./scripts/verify-public-release.ps1

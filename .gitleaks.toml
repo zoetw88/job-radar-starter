@@ -1,0 +1,11 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local dependency and test artifact directories are not release inputs"
+paths = [
+  '''(^|/)\.venv/''',
+  '''(^|/)node_modules/''',
+  '''(^|/)test-results/''',
+  '''(^|/)playwright-report/'''
+]

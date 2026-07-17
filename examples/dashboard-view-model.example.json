@@ -1,0 +1,62 @@
+{
+  "contract_version": 1,
+  "scan": {
+    "state": "complete",
+    "mode": "atomic",
+    "incomplete": false,
+    "observed_on": "2026-07-17",
+    "failures": []
+  },
+  "jobs": [
+    {
+      "stable_id": "job_example_backend_001",
+      "legacy_status_keys": [
+        "https://example.com/jobs/backend-001"
+      ],
+      "source": "greenhouse",
+      "external_id": "backend-001",
+      "company": "Example Systems",
+      "title": "Backend Engineer",
+      "location": "Toronto, Canada",
+      "url": "https://example.com/jobs/backend-001",
+      "published_at": "2026-07-16",
+      "first_seen": "2026-07-16",
+      "last_seen": "2026-07-17",
+      "country": "CA",
+      "category": "engineering",
+      "salary": "",
+      "tracks": ["backend"],
+      "skills": ["Python"],
+      "visa_supported": null,
+      "score": 82,
+      "summary": "Relevant backend role from an official board.",
+      "risk": "Confirm work authorization.",
+      "freshness": "active"
+    }
+  ],
+  "review": {
+    "rejected": [],
+    "sampled_rejected_ids": []
+  },
+  "tracking": {
+    "statuses": {
+      "job_example_backend_001": "interested"
+    },
+    "metrics": {
+      "contract_version": 1,
+      "total": 1,
+      "funnel": {
+        "interested": 1
+      },
+      "rejection_stages": {},
+      "slices": {
+        "resume_version": {},
+        "channel": {},
+        "country": {
+          "CA": 1
+        }
+      }
+    },
+    "due_actions": []
+  }
+}

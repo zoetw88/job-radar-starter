@@ -1,0 +1,40 @@
+[
+  {
+    "source": "greenhouse",
+    "external_id": "northstar-backend",
+    "company": "Example Systems",
+    "title": "Senior Backend Engineer",
+    "location": "Toronto, Canada",
+    "url": "https://example.com/jobs/northstar-backend",
+    "published_at": "2026-07-14T00:00:00Z",
+    "first_seen": "2026-07-14",
+    "score": 91,
+    "country": "CA",
+    "category": "backend",
+    "tracks": ["backend"],
+    "skills": ["Go", "Kubernetes"],
+    "visa_supported": true,
+    "summary": "Strong backend and distributed-systems overlap.",
+    "risk": "Confirm work authorization and location requirements.",
+    "salary": "CAD 148k–176k"
+  },
+  {
+    "source": "ashby",
+    "external_id": "cedar-ai-platform",
+    "company": "Invented Labs",
+    "title": "AI Platform Engineer",
+    "location": "Remote",
+    "url": "https://example.com/jobs/cedar-ai-platform",
+    "published_at": "2026-07-13T00:00:00Z",
+    "first_seen": "2026-07-13",
+    "score": 84,
+    "country": "REMOTE",
+    "category": "ai-platform",
+    "tracks": ["ai-product", "backend"],
+    "skills": ["Python", "LLM"],
+    "visa_supported": null,
+    "summary": "Combines platform operations with applied AI delivery.",
+    "risk": "Confirm eligible hiring countries for the remote role.",
+    "salary": ""
+  }
+]

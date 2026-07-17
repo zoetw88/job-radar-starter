@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "job-radar-status-sync",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-16",
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STATUS_COORDINATOR",
+        "class_name": "StatusCoordinator"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["StatusCoordinator"]
+    }
+  ]
+}

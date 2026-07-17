@@ -1,0 +1,9 @@
+{
+  "contract_version": 1,
+  "statuses": {
+    "job_example_backend_001": "interested"
+  },
+  "legacy_keys": [
+    "https://example.com/jobs/old-backend-role"
+  ]
+}

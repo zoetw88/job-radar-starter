@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/job-radar/schemas/cloudflare-sync-v1.json",
+  "title": "Job Radar optional status sync update v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "statuses", "legacy_keys"],
+  "properties": {
+    "contract_version": { "const": 1 },
+    "statuses": {
+      "type": "object",
+      "maxProperties": 500,
+      "propertyNames": {
+        "pattern": "^job_[a-z0-9_-]{8,128}$",
+        "maxLength": 128
+      },
+      "additionalProperties": {
+        "enum": ["interested", "applied", "skip", "dead"]
+      }
+    },
+    "legacy_keys": {
+      "type": "array",
+      "maxItems": 500,
+      "items": { "type": "string", "maxLength": 512 }
+    }
+  }
+}

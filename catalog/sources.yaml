@@ -1,0 +1,72 @@
+countries:
+  TW:
+    name: Taiwan
+    sources: [greenhouse, lever, ashby]
+  JP:
+    name: Japan
+    sources: [greenhouse, lever, ashby]
+  SG:
+    name: Singapore
+    sources: [greenhouse, lever, ashby]
+  CA:
+    name: Canada
+    sources: [greenhouse, lever, ashby]
+  GB:
+    name: United Kingdom
+    sources: [greenhouse, lever, ashby]
+  DE:
+    name: Germany
+    sources: [greenhouse, lever, ashby]
+  FR:
+    name: France
+    sources: [greenhouse, lever, ashby]
+  NL:
+    name: Netherlands
+    sources: [greenhouse, lever, ashby]
+  REMOTE:
+    name: Global Remote
+    sources: [greenhouse, lever, ashby]
+
+sources:
+  greenhouse:
+    kind: official_api
+    terms_url: https://developer.greenhouse.io/job-board.html
+    enabled: true
+  lever:
+    kind: official_api
+    terms_url: https://github.com/lever/postings-api
+    enabled: true
+  ashby:
+    kind: official_api
+    terms_url: https://developers.ashbyhq.com/docs/public-job-posting-api
+    enabled: true
+
+companies:
+  Northstar Robotics:
+    countries: [JP]
+    source: greenhouse
+    board: replace-with-your-board-token
+  Cedarline Systems:
+    countries: [REMOTE]
+    source: greenhouse
+    board: replace-with-your-board-token
+  Harbour Labs:
+    countries: [CA]
+    source: greenhouse
+    board: replace-with-your-board-token
+  Alder Finance:
+    countries: [GB]
+    source: greenhouse
+    board: replace-with-your-board-token
+  Meridian Works:
+    countries: [GB]
+    source: ashby
+    board: replace-with-your-board-name
+  Lantern Cloud:
+    countries: [SG, TW]
+    source: ashby
+    board: replace-with-your-board-name
+  Example Systems:
+    countries: [CA, GB, FR, REMOTE]
+    source: ashby
+    board: replace-with-your-board-name

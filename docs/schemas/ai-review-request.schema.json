@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/job-radar/schemas/ai-review-request-v1.json",
+  "title": "Job Radar compact AI review request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "stable_id",
+    "title",
+    "company",
+    "country",
+    "local_fit",
+    "jd_evidence"
+  ],
+  "properties": {
+    "contract_version": { "const": 1 },
+    "stable_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "title": { "type": "string", "minLength": 1, "maxLength": 240 },
+    "company": { "type": "string", "minLength": 1, "maxLength": 240 },
+    "country": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "local_fit": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "jd_evidence": {
+      "type": "array",
+      "maxItems": 8,
+      "items": { "type": "string", "minLength": 1, "maxLength": 500 }
+    }
+  }
+}

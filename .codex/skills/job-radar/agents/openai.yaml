@@ -1,0 +1,4 @@
+interface:
+  display_name: "Job Radar"
+  short_description: "Run the local-first job scanning and scoring pipeline"
+  default_prompt: "Use $job-radar to check readiness and run my private local job dashboard pipeline."

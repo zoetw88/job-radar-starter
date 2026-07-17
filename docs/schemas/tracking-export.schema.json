@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/job-radar/schemas/tracking-export-v1.json",
+  "title": "Job Radar local tracking export v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "state"],
+  "properties": {
+    "contract_version": { "const": 1 },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applications", "events", "lifecycle", "rejected"],
+      "properties": {
+        "applications": { "$ref": "#/$defs/stateDocument" },
+        "events": { "$ref": "#/$defs/stateDocument" },
+        "lifecycle": { "$ref": "#/$defs/stateDocument" },
+        "rejected": { "$ref": "#/$defs/stateDocument" }
+      }
+    }
+  },
+  "$defs": {
+    "stateDocument": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "items"],
+      "properties": {
+        "contract_version": { "const": 1 },
+        "items": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    }
+  }
+}

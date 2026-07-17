@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/job-radar/schemas/ai-review-response-v1.json",
+  "title": "Job Radar AI review response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "stable_id",
+    "decision",
+    "score",
+    "reason_codes",
+    "summary"
+  ],
+  "properties": {
+    "contract_version": { "const": 1 },
+    "stable_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "decision": { "enum": ["recommend", "reject"] },
+    "score": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 12,
+      "items": { "type": "string", "minLength": 1, "maxLength": 80 }
+    },
+    "summary": { "type": "string", "maxLength": 500 }
+  }
+}

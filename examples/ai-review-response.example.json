@@ -1,0 +1,11 @@
+{
+  "contract_version": 1,
+  "stable_id": "job_example_backend_001",
+  "decision": "recommend",
+  "score": 84,
+  "reason_codes": [
+    "backend_match",
+    "country_match"
+  ],
+  "summary": "Strong local fit; confirm work authorization before applying."
+}

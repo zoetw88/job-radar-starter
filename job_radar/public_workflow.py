@@ -1,0 +1,385 @@
+from __future__ import annotations
+
+import subprocess
+import multiprocessing
+import os
+import signal
+import sys
+import time
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import asdict
+from datetime import date
+from typing import Any, Protocol
+
+from job_radar.ai_review import (
+    DEFAULT_MAX_FAST_CALLS,
+    DEFAULT_PER_CALL_TIMEOUT_SECONDS,
+    DEFAULT_TOTAL_DEADLINE_SECONDS,
+)
+from job_radar.application import score_jobs
+from job_radar.config import UserConfig
+from job_radar.domain.jobs import Job
+from job_radar.lifecycle_merge import merge_scan_state
+from job_radar.tracking_commands import build_metrics, due_actions
+from job_radar.windows_job import WindowsJob
+
+
+_TASKKILL_TIMEOUT_SECONDS = 1
+_WORKER_JOIN_TIMEOUT_SECONDS = 1
+
+
+class WorkflowRepository(Protocol):
+    def initialize(self) -> dict[str, Any]: ...
+
+    def read(self, kind: str) -> dict[str, Any]: ...
+
+    def write(self, kind: str, document: dict[str, Any]) -> Any: ...
+
+
+def _review_runner_worker(
+    connection: Any,
+    start_gate: Any,
+    review_runner: Callable[..., dict[str, Any]],
+    jobs: list[dict[str, Any]],
+    kwargs: dict[str, Any],
+) -> None:
+    if start_gate is not None:
+        start_gate.wait()
+        if os.path.normcase(sys._base_executable) != os.path.normcase(sys.executable):
+            os.environ.pop("__PYVENV_LAUNCHER__", None)
+            inherited_paths = [path for path in sys.path if path]
+            existing_pythonpath = os.environ.get("PYTHONPATH")
+            if existing_pythonpath:
+                inherited_paths.append(existing_pythonpath)
+            os.environ["PYTHONPATH"] = os.pathsep.join(inherited_paths)
+            base_executable = os.path.join(sys.base_prefix, "python.exe")
+            sys.executable = (
+                base_executable
+                if os.path.isfile(base_executable)
+                else sys._base_executable
+            )
+    if os.name != "nt":
+        os.setsid()
+    try:
+        connection.send(("ready", None))
+        connection.send(("ok", review_runner(jobs, **kwargs)))
+    except BaseException as error:
+        connection.send(("error", type(error).__name__))
+    finally:
+        connection.close()
+
+
+def _kill_worker_tree(process: Any, windows_job: WindowsJob | None = None) -> None:
+    if windows_job is not None:
+        windows_job.terminate()
+        process.join(timeout=_WORKER_JOIN_TIMEOUT_SECONDS)
+        if process.is_alive():
+            process.kill()
+            process.join(timeout=_WORKER_JOIN_TIMEOUT_SECONDS)
+        windows_job.wait_empty(_WORKER_JOIN_TIMEOUT_SECONDS)
+        return
+    if not process.is_alive():
+        return
+    if os.name == "nt":
+        try:
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                capture_output=True,
+                check=False,
+                text=True,
+                timeout=_TASKKILL_TIMEOUT_SECONDS,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            pass
+    else:
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    process.join(timeout=_WORKER_JOIN_TIMEOUT_SECONDS)
+    if process.is_alive():
+        process.kill()
+        process.join(timeout=_WORKER_JOIN_TIMEOUT_SECONDS)
+
+
+def run_review_runner_bounded(
+    review_runner: Callable[..., dict[str, Any]],
+    jobs: list[dict[str, Any]],
+    *,
+    observed_on: str,
+    repository: WorkflowRepository,
+    per_call_timeout_seconds: float,
+    total_deadline_seconds: float,
+    max_fast_calls: int,
+) -> dict[str, Any]:
+    for field, value in (
+        ("per_call_timeout_seconds", per_call_timeout_seconds),
+        ("total_deadline_seconds", total_deadline_seconds),
+    ):
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or value <= 0
+        ):
+            raise ValueError(f"{field} must be a positive number")
+    if (
+        isinstance(max_fast_calls, bool)
+        or not isinstance(max_fast_calls, int)
+        or max_fast_calls <= 0
+    ):
+        raise ValueError("max_fast_calls must be a positive integer")
+    context = multiprocessing.get_context("spawn")
+    parent, child = context.Pipe(duplex=False)
+    start_gate = context.Event() if os.name == "nt" else None
+    windows_job = WindowsJob() if os.name == "nt" else None
+    process = context.Process(
+        target=_review_runner_worker,
+        args=(
+            child,
+            start_gate,
+            review_runner,
+            jobs,
+            {
+                "observed_on": observed_on,
+                "repository": repository,
+                "per_call_timeout_seconds": per_call_timeout_seconds,
+                "total_deadline_seconds": total_deadline_seconds,
+                "max_fast_calls": max_fast_calls,
+            },
+        ),
+    )
+    try:
+        process.start()
+        if windows_job is not None:
+            windows_job.assign_handle(process.sentinel)
+            start_gate.set()
+    except BaseException:
+        if process.pid is not None:
+            _kill_worker_tree(process, windows_job)
+            process.close()
+        if windows_job is not None:
+            windows_job.close()
+        parent.close()
+        child.close()
+        raise
+    child.close()
+    startup_deadline = time.monotonic() + 10
+    deadline: float | None = None
+    try:
+        while True:
+            now = time.monotonic()
+            if deadline is not None and now >= deadline:
+                _kill_worker_tree(process, windows_job)
+                raise TimeoutError("review runner exceeded total deadline")
+            if deadline is None and now >= startup_deadline:
+                _kill_worker_tree(process, windows_job)
+                raise TimeoutError("review runner failed to start")
+            if parent.poll(0.01):
+                kind, payload = parent.recv()
+                if kind == "ready":
+                    deadline = time.monotonic() + total_deadline_seconds
+                    continue
+                process.join(timeout=_WORKER_JOIN_TIMEOUT_SECONDS)
+                if kind == "ok":
+                    return payload
+                raise RuntimeError(f"review runner failed: {payload}")
+            if not process.is_alive():
+                raise RuntimeError("review runner exited without a result")
+    finally:
+        if windows_job is not None or process.is_alive():
+            _kill_worker_tree(process, windows_job)
+        if windows_job is not None:
+            windows_job.close()
+        process.close()
+        parent.close()
+
+
+def _document_items(repository: WorkflowRepository, kind: str) -> list[dict[str, Any]]:
+    document = repository.read(kind)
+    if (
+        not isinstance(document, dict)
+        or document.get("contract_version") != 1
+        or set(document) != {"contract_version", "items"}
+        or not isinstance(document["items"], list)
+        or not all(isinstance(item, dict) for item in document["items"])
+    ):
+        raise ValueError(f"{kind} state must be a versioned items document")
+    return document["items"]
+
+
+def _disabled_review() -> dict[str, Any]:
+    return {
+        "contract_version": 1,
+        "reviews": [],
+        "rejected": [],
+        "rejected_sample": [],
+        "failures": [],
+        "company_facts_used": 0,
+        "report": {
+            "provider_calls": 0,
+            "cache_hits": 0,
+            "escalations": 0,
+        },
+    }
+
+
+def _dashboard_statuses(applications: Sequence[Mapping[str, Any]]) -> dict[str, str]:
+    statuses: dict[str, str] = {}
+    for application in applications:
+        job_id = application.get("job_id")
+        status = application.get("status")
+        if not isinstance(job_id, str) or not isinstance(status, str):
+            continue
+        normalized = status.casefold()
+        if normalized in {"interested", "applied"}:
+            statuses[job_id] = normalized
+        elif normalized in {"interview", "offer", "accepted"}:
+            statuses[job_id] = "applied"
+        elif normalized in {"rejected", "withdrawn"}:
+            statuses[job_id] = "skip"
+    return dict(sorted(statuses.items()))
+
+
+def execute_public_workflow(
+    *,
+    scan_result: Mapping[str, Any],
+    config: UserConfig,
+    repository: WorkflowRepository,
+    observed_on: str,
+    aliases: Mapping[str, Any],
+    ai_scorer: Callable[[Sequence[Job], UserConfig], list[Job]] | None = None,
+    review_runner: Callable[..., dict[str, Any]] | None = None,
+    per_call_timeout_seconds: float = DEFAULT_PER_CALL_TIMEOUT_SECONDS,
+    total_deadline_seconds: float = DEFAULT_TOTAL_DEADLINE_SECONDS,
+    max_fast_calls: int = DEFAULT_MAX_FAST_CALLS,
+) -> dict[str, Any]:
+    """Run the public local-first workflow over explicit adapter boundaries."""
+
+    date.fromisoformat(observed_on)
+    repository.initialize()
+    if scan_result.get("contract_version") != 1:
+        raise ValueError("scan result has unsupported contract version")
+    raw_jobs = scan_result.get("jobs")
+    if not isinstance(raw_jobs, list) or not all(
+        isinstance(item, Mapping) for item in raw_jobs
+    ):
+        raise ValueError("scan result jobs must be objects")
+
+    jobs = []
+    for raw in raw_jobs:
+        item = dict(raw)
+        item["tracks"] = tuple(item.get("tracks", ()))
+        item["skills"] = tuple(item.get("skills", ()))
+        jobs.append(Job(**item))
+    if ai_scorer is not None:
+        scored = ai_scorer(jobs, config)
+    else:
+        scored = score_jobs(jobs, config)
+    published = [
+        job for job in scored if (job.score or 0) >= config.matching.minimum_score
+    ]
+    published.sort(
+        key=lambda job: (
+            -(job.score or 0),
+            job.company.casefold(),
+            job.title.casefold(),
+        )
+    )
+    scored_scan = {
+        "contract_version": 1,
+        "mode": scan_result.get("mode"),
+        "incomplete": scan_result.get("incomplete"),
+        "jobs": [asdict(job) for job in published],
+        "failures": list(scan_result.get("failures", [])),
+    }
+    for item in scored_scan["jobs"]:
+        item["tracks"] = list(item["tracks"])
+        item["skills"] = list(item["skills"])
+
+    prior_jobs = _document_items(repository, "lifecycle")
+    application_statuses = _dashboard_statuses(
+        _document_items(repository, "applications")
+    )
+    lifecycle = merge_scan_state(
+        prior_state={
+            "contract_version": 1,
+            "jobs": prior_jobs,
+            "statuses": {},
+        },
+        scan_result=scored_scan,
+        observed_on=observed_on,
+        aliases=aliases,
+        statuses=application_statuses,
+    )
+    repository.write(
+        "lifecycle",
+        {"contract_version": 1, "items": lifecycle["jobs"]},
+    )
+
+    if review_runner is None:
+        review = _disabled_review()
+        review_mode = "disabled"
+    else:
+        review = run_review_runner_bounded(
+            review_runner,
+            lifecycle["jobs"],
+            observed_on=observed_on,
+            repository=repository,
+            per_call_timeout_seconds=per_call_timeout_seconds,
+            total_deadline_seconds=total_deadline_seconds,
+            max_fast_calls=max_fast_calls,
+        )
+        if not isinstance(review, dict) or review.get("contract_version") != 1:
+            raise ValueError("review runner must return a versioned review result")
+        review_mode = "configured"
+
+    metrics = build_metrics(repository)
+    actions = due_actions(repository, as_of=f"{observed_on}T23:59:59Z")
+    rejected = review.get("rejected", [])
+    sampled = review.get("rejected_sample", [])
+    if not isinstance(rejected, list) or not isinstance(sampled, list):
+        raise ValueError("review result rejected fields must be lists")
+    sampled_ids = [
+        item["stable_id"]
+        for item in sampled
+        if isinstance(item, dict) and isinstance(item.get("stable_id"), str)
+    ]
+    failures = scored_scan["failures"]
+    view_model = {
+        "contract_version": 1,
+        "scan": {
+            "state": "partial" if scored_scan["incomplete"] else "complete",
+            "mode": scored_scan["mode"],
+            "incomplete": scored_scan["incomplete"],
+            "observed_on": observed_on,
+            "failures": failures,
+        },
+        "jobs": lifecycle["jobs"],
+        "review": {
+            "rejected": rejected,
+            "sampled_rejected_ids": sampled_ids,
+        },
+        "tracking": {
+            "statuses": lifecycle["statuses"],
+            "metrics": metrics,
+            "due_actions": actions,
+        },
+    }
+    report = review.get("report", {})
+    provider_calls = (
+        report.get("provider_calls", 0) if isinstance(report, dict) else 0
+    )
+    return {
+        "scan": scored_scan,
+        "lifecycle": lifecycle,
+        "review_result": review,
+        "review": {
+            "mode": review_mode,
+            "provider_calls": provider_calls,
+        },
+        "view_model": view_model,
+        "counts": {
+            "scanned": len(jobs),
+            "published": len(published),
+        },
+    }

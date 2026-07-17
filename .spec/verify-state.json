@@ -1,0 +1,138 @@
+{
+  "_meta": {
+    "first_init": "2026-07-16T16:41:53.8862284Z",
+    "ticket": "integrate-job-tracker"
+  },
+  "task-1": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T16:41:53.8862284Z",
+    "status": "PASS"
+  },
+  "task-2": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T16:47:11Z",
+    "status": "PASS"
+  },
+  "task-3": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T16:53:10Z",
+    "status": "PASS"
+  },
+  "task-4": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T17:00:48Z",
+    "status": "PASS"
+  },
+  "task-5": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T17:05:22Z",
+    "status": "PASS"
+  },
+  "task-6": {
+    "attempts": 1,
+    "last_verified": "2026-07-16T17:23:41Z",
+    "status": "PASS",
+    "note": "First full regression exposed and fixed sequential Windows source startup timing."
+  },
+  "task-7": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T17:40:21Z",
+    "status": "PASS",
+    "note": "Browser dependency advanced from proposed 1.54.1 to secure 1.61.1 due to GHSA-7mvr-c777-76hp."
+  },
+  "task-8": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T17:54:47Z",
+    "status": "PASS",
+    "note": "Background HTTP preview was blocked; local workerd KV integration and Wrangler dry-run passed without deployment."
+  },
+  "task-9": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T18:18:31Z",
+    "status": "PASS",
+    "note": "Independent verify-public-release.ps1 completed with exit 0; no production deploy or archive action occurred."
+  },
+  "task-11": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T18:48:00Z",
+    "status": "PASS",
+    "note": "Focused atomic tracking/storage suite and final 226-test release gate passed."
+  },
+  "task-10": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T18:55:00Z",
+    "status": "PASS"
+  },
+  "task-12": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T18:55:00Z",
+    "status": "PASS"
+  },
+  "task-14": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T19:05:00Z",
+    "status": "PASS"
+  },
+  "task-13": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T19:07:00Z",
+    "status": "PASS"
+  },
+  "task-15": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T19:07:00Z",
+    "status": "PASS",
+    "note": "Wrangler dry-run passed without credentials or deployment; only the fixed-owner SQLite Durable Object binding was packaged."
+  },
+  "task-16": {
+    "attempts": 1,
+    "last_verified": "2026-07-16T19:12:00Z",
+    "status": "PASS",
+    "note": "First release run correctly failed on the new git-ls-files contract; the wrapper invocation was fixed and the complete gate then passed."
+  },
+  "task-17": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T19:40:00Z",
+    "status": "PASS"
+  },
+  "task-18": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T19:40:00Z",
+    "status": "PASS"
+  },
+  "task-19": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T19:40:00Z",
+    "status": "PASS",
+    "note": "Hosted workflow was contract-tested locally; the independent local release script passed. No production deployment occurred."
+  },
+  "task-20": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T20:08:00Z",
+    "status": "PASS"
+  },
+  "task-21": {
+    "attempts": 0,
+    "last_verified": "2026-07-16T20:08:00Z",
+    "status": "PASS",
+    "note": "The real SIGTERM-ignore regression is POSIX-only and is expectedly skipped on Windows; portable and Windows cleanup tests passed."
+  },
+  "task-22": {
+    "attempts": 1,
+    "last_verified": "2026-07-16T20:08:00Z",
+    "status": "PASS",
+    "note": "The first merged release run exposed the missing exact LICENSE allowlist; it was fixed and the full gate then passed."
+  },
+  "task-23": {
+    "attempts": 1,
+    "last_verified": "2026-07-17T00:13:00Z",
+    "status": "PASS",
+    "note": "The first full run exposed a load-sensitive 3-second wall-clock assertion; deterministic write-count remained the primary complexity guard and the generous 10-second ceiling still rejects the former 87-second quadratic implementation."
+  },
+  "task-24": {
+    "attempts": 5,
+    "last_verified": "2026-07-17T02:53:00Z",
+    "status": "PASS",
+    "note": "Final reviews exposed clean-history, protocol-disclosure, privacy self-publication, Dashboard evidence-overwrite, wall-clock, PID-file flush races, an over-broad LICENSE exception, and a hosted Playwright launcher tied to .venv. The clean-root local gate passed with 291 Python tests, 3 Chromium tests, 31 Worker tests, and all exact-line privacy, Gitleaks, audit, Wrangler, reproducibility, and diff checks green."
+  }
+}

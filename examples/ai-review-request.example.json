@@ -1,0 +1,12 @@
+{
+  "contract_version": 1,
+  "stable_id": "job_example_backend_001",
+  "title": "Backend Engineer",
+  "company": "Example Systems",
+  "country": "CA",
+  "local_fit": 82,
+  "jd_evidence": [
+    "Build reliable Python services.",
+    "Support engineers working across time zones."
+  ]
+}

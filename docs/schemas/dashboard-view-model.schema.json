@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/job-radar/schemas/dashboard-view-model-v1.json",
+  "title": "Job Radar dashboard view model v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_version", "scan", "jobs", "review", "tracking"],
+  "properties": {
+    "contract_version": { "const": 1 },
+    "scan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "mode", "incomplete", "observed_on", "failures"],
+      "properties": {
+        "state": { "enum": ["loading", "complete", "partial"] },
+        "mode": { "enum": ["atomic", "best-effort"] },
+        "incomplete": { "type": "boolean" },
+        "observed_on": { "type": "string" },
+        "failures": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "company", "category", "message"],
+            "properties": {
+              "source": { "type": "string" },
+              "company": { "type": "string" },
+              "category": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "jobs": {
+      "type": "array",
+      "items": { "type": "object" }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rejected", "sampled_rejected_ids"],
+      "properties": {
+        "rejected": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "sampled_rejected_ids": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "tracking": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["statuses", "metrics", "due_actions"],
+      "properties": {
+        "statuses": { "type": "object" },
+        "metrics": { "type": "object" },
+        "due_actions": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    }
+  }
+}
